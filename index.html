@@ -93,10 +93,10 @@ select,input{min-height:44px;border:1px solid var(--line);background:var(--bg);b
 details{font-size:15px}summary{cursor:pointer;color:var(--mute);min-height:32px}
 textarea{width:100%;min-height:90px;font:13px/1.4 monospace;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:inherit;padding:8px}
 .fab{position:fixed;right:16px;bottom:16px;z-index:20;box-shadow:0 6px 20px #0003;font-weight:700;background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
-.fab2{bottom:72px}
+.fab2{bottom:72px}.fab3{bottom:128px}.fab{min-width:112px}
 .sm{position:fixed;inset:0;z-index:30;background:#0006;display:none;align-items:center;justify-content:center;padding:16px}.sm.open{display:flex}
 .smb{background:var(--bg);border-radius:16px;padding:20px;width:min(380px,100%);box-shadow:0 20px 60px #0005}
-.tp{position:fixed;right:16px;bottom:128px;z-index:20;width:min(300px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 12px 40px #0004;display:none}
+.tp{position:fixed;right:16px;bottom:184px;z-index:20;width:min(300px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 12px 40px #0004;display:none}
 .tp.open{display:block}
 .tp h2{font-size:17px;margin-bottom:8px}
 .tp label{display:grid;grid-template-columns:1fr 56px 78px;align-items:center;gap:10px;padding:6px 0;font-size:15px}
@@ -106,6 +106,7 @@ textarea{width:100%;min-height:90px;font:13px/1.4 monospace;border:1px solid var
 @media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}.mapbox{height:min(60vh,520px)}}
 @media(max-width:600px){.mapbox{height:auto;min-height:0;aspect-ratio:1000/560}.legend{display:none}}
 </style>
+<script>try{const t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch{}</script>
 </head>
 <body>
 <header>
@@ -140,6 +141,7 @@ textarea{width:100%;min-height:90px;font:13px/1.4 monospace;border:1px solid var
     <p class="en" style="text-align:center;font-size:12px;margin:0 0 64px;line-height:1.7"><strong style="color:var(--ink)">© 2026 원민재. All rights reserved.</strong><br>이 사이트의 디자인과 코드는 원민재에게 저작권이 있으며, 무단 복제·배포를 금지합니다.<br>제목 폰트: 와일드각 (김씨폰트공방) · 본문 폰트: Pretendard · 지도 데이터: Natural Earth<br><a href="privacy.html" style="color:inherit">개인정보처리방침</a></p>
   </aside>
 </div>
+<button class="fab fab3" id="thb" type="button" aria-label="화면 모드 바꾸기">다크 모드</button>
 <button class="fab fab2" id="shb" type="button">지도 공유</button>
 <button class="fab" id="fab" aria-expanded="false" aria-controls="tp">색 설정</button>
 <div class="sm" id="sm"><form class="smb" id="smf" role="dialog" aria-label="지도 공유">
@@ -282,6 +284,12 @@ $('tpc').onclick=()=>{tp.classList.remove('open');fab.setAttribute('aria-expande
 $('tpr').onclick=()=>{S.theme={...DEF};commit()};
 tp.querySelectorAll('input').forEach(i=>{i.addEventListener('input',()=>{S.theme[i.dataset.t]=i.value;applyTheme()});i.addEventListener('change',()=>{S.theme[i.dataset.t]=i.value;commit()})});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')tp.classList.remove('open')});
+/* ---- light/dark ---- */
+{const thb=$('thb'),mq=matchMedia('(prefers-color-scheme: dark)');
+ const cur=()=>document.documentElement.dataset.theme||(mq.matches?'dark':'light');
+ const label=()=>{thb.textContent=cur()==='dark'?'라이트 모드':'다크 모드'};
+ thb.onclick=()=>{const n=cur()==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('theme',n)}catch{}label();applyTheme()};
+ mq.addEventListener?.('change',()=>{label();applyTheme()});label()}
 /* ---- share png ---- */
 const shareBtn=$('shb'), sm=$('sm');
 shareBtn.onclick=()=>{sm.classList.add('open');$('nk').value=(()=>{try{return localStorage.getItem('nick')||''}catch{return ''}})();$('nk').focus();$('smm').textContent=''};
