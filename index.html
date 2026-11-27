@@ -21,7 +21,7 @@
 --bg:light-dark(#ffffff,#0e1a20);--ink:light-dark(#2b2326,#eef2f4);--mute:light-dark(#6f6669,#9fb0b6);
 --sea:light-dark(#eaf6fd,#132a35);--land:light-dark(#e8e6e3,#2e3b41);--landh:light-dark(#d9d6d2,#3d4c53);
 --edge:light-dark(#ffffff,#22313a);--border:light-dark(#9c9592,#7d8d94);
---sel:#f7b6c8;--acc:#e88aa8;--brown:#6d4c41;--acc-ink:#2b1a20}
+--sel:#5A2B1B;--acc:#9C877C;--brown:#FB7B50;--acc-ink:#2b1a20}
 :root{--card:color-mix(in srgb,var(--acc) 8%,var(--bg));--line:color-mix(in srgb,var(--acc) 22%,var(--bg))}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
@@ -93,7 +93,10 @@ select,input{min-height:44px;border:1px solid var(--line);background:var(--bg);b
 details{font-size:15px}summary{cursor:pointer;color:var(--mute);min-height:32px}
 textarea{width:100%;min-height:90px;font:13px/1.4 monospace;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:inherit;padding:8px}
 .fab{position:fixed;right:16px;bottom:16px;z-index:20;box-shadow:0 6px 20px #0003;font-weight:700;background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
-.tp{position:fixed;right:16px;bottom:72px;z-index:20;width:min(300px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 12px 40px #0004;display:none}
+.fab2{bottom:72px}
+.sm{position:fixed;inset:0;z-index:30;background:#0006;display:none;align-items:center;justify-content:center;padding:16px}.sm.open{display:flex}
+.smb{background:var(--bg);border-radius:16px;padding:20px;width:min(380px,100%);box-shadow:0 20px 60px #0005}
+.tp{position:fixed;right:16px;bottom:128px;z-index:20;width:min(300px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 12px 40px #0004;display:none}
 .tp.open{display:block}
 .tp h2{font-size:17px;margin-bottom:8px}
 .tp label{display:grid;grid-template-columns:1fr 56px 78px;align-items:center;gap:10px;padding:6px 0;font-size:15px}
@@ -137,7 +140,16 @@ textarea{width:100%;min-height:90px;font:13px/1.4 monospace;border:1px solid var
     <p class="en" style="text-align:center;font-size:12px;margin:0 0 64px;line-height:1.7"><strong style="color:var(--ink)">© 2026 원민재. All rights reserved.</strong><br>이 사이트의 디자인과 코드는 원민재에게 저작권이 있으며, 무단 복제·배포를 금지합니다.<br>제목 폰트: 와일드각 (김씨폰트공방) · 본문 폰트: Pretendard · 지도 데이터: Natural Earth<br><a href="privacy.html" style="color:inherit">개인정보처리방침</a></p>
   </aside>
 </div>
+<button class="fab fab2" id="shb" type="button">지도 공유</button>
 <button class="fab" id="fab" aria-expanded="false" aria-controls="tp">색 설정</button>
+<div class="sm" id="sm"><form class="smb" id="smf" role="dialog" aria-label="지도 공유">
+  <h2>지도 공유</h2>
+  <p class="en" style="margin:4px 0 12px">지금 보이는 만큼의 지도와 정복한 곳 목록을 PNG 이미지로 저장해요.</p>
+  <label class="en" for="nk">닉네임</label>
+  <input id="nk" maxlength="20" placeholder="예: 민재" autocomplete="nickname" style="width:100%;margin-top:4px">
+  <div class="row" style="margin-top:14px"><button class="pri" id="smg" style="flex:1">PNG 저장</button><button type="button" id="smc">닫기</button></div>
+  <div id="smm" class="en" style="margin-top:8px"></div>
+</form></div>
 <div class="tp" id="tp" role="dialog" aria-label="색 설정">
   <h2>색 설정</h2>
   <label>정복한 지역<input type="color" data-t="brown"><code></code></label>
@@ -160,7 +172,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const fmt=v=>{const[y,m]=v.split('-');return `${y}년 ${+m}월`};
 const latest=v=>v.v.length?v.v.reduce((a,b)=>a>b.d?a:b.d,''):'';
 const vlab=x=>fmt(x.d)+(x.t?` · ${x.t}`:'');
-const DEF={brown:'#6d4c41',sel:'#f7b6c8',acc:'#e88aa8',sea:''};
+const DEF={brown:'#FB7B50',sel:'#5A2B1B',acc:'#9C877C',sea:'#132A35'};
 let S={regions:{},theme:{...DEF}}, sel=null, selC=null, confirmOff=false, ready=false;
 let ref=null, saving=false, again=false, timer=null;
 
@@ -270,6 +282,80 @@ $('tpc').onclick=()=>{tp.classList.remove('open');fab.setAttribute('aria-expande
 $('tpr').onclick=()=>{S.theme={...DEF};commit()};
 tp.querySelectorAll('input').forEach(i=>{i.addEventListener('input',()=>{S.theme[i.dataset.t]=i.value;applyTheme()});i.addEventListener('change',()=>{S.theme[i.dataset.t]=i.value;commit()})});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')tp.classList.remove('open')});
+/* ---- share png ---- */
+const shareBtn=$('shb'), sm=$('sm');
+shareBtn.onclick=()=>{sm.classList.add('open');$('nk').value=(()=>{try{return localStorage.getItem('nick')||''}catch{return ''}})();$('nk').focus();$('smm').textContent=''};
+$('smc').onclick=()=>sm.classList.remove('open');
+sm.addEventListener('click',e=>{if(e.target===sm)sm.classList.remove('open')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')sm.classList.remove('open')});
+let BB=null;
+function col(v){const p=document.createElement('i');p.style.color=v;document.body.appendChild(p);const c=getComputedStyle(p).color;p.remove();return c}
+function wrapChips(ctx,items,x0,maxW,font,h,gap){const out=[];let x=x0,y=0;ctx.font=font;
+  for(const t of items){const w=ctx.measureText(t).width+28;if(x+w>x0+maxW&&x>x0){x=x0;y+=h+gap}out.push({t,x,y,w});x+=w+gap}return {chips:out,height:items.length?y+h:0}}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+async function makePng(nick){
+  await Promise.all(['400 40px WildGak','400 16px Pretendard','600 16px Pretendard','700 16px Pretendard'].map(f=>document.fonts.load(f,'세계정복ABC가')));
+  if(!BB){BB={};for(const k in P){const b=P[k].getBBox();BB[k]=[b.x,b.y,b.x+b.width,b.y+b.height]}}
+  const C={bg:col('var(--bg)'),ink:col('var(--ink)'),mute:col('var(--mute)'),sea:col('var(--sea)'),land:col('var(--land)'),edge:col('var(--edge)'),border:col('var(--border)'),brown:col('var(--brown)'),acc:col('var(--acc)'),card:col('var(--card)'),line:col('var(--line)')};
+  // phone wallpaper size 1080x1920 (9:16)
+  const W=1080,H=1920,PAD=60,MW=W-PAD*2,headH=250,MH=740,mapY=headH,listTop=mapY+MH+44,footY=H-56,listBottom=footY-40;
+  // visible map area -> crop to MW:MH
+  const r=box.getBoundingClientRect(),inv=svg.getScreenCTM().inverse();
+  const a=new DOMPoint(r.left,r.top).matrixTransform(inv),b=new DOMPoint(r.right,r.bottom).matrixTransform(inv);
+  let vx=(a.x-T.x)/T.s,vy=(a.y-T.y)/T.s,vw=(b.x-a.x)/T.s,vh=(b.y-a.y)/T.s;const AR=MH/MW;
+  if(vh/vw>AR){const nh=vw*AR;vy+=(vh-nh)/2;vh=nh}else{const nw=vh/AR;vx+=(vw-nw)/2;vw=nw}
+  const px=vw/MW;const ps=[];
+  for(const k in P){const q=BB[k];if(q[2]<vx||q[0]>vx+vw||q[3]<vy||q[1]>vy+vh)continue;ps.push(`<path d="${P[k].getAttribute('d')}" fill="${S.regions[k]?C.brown:C.land}"/>`)}
+  const map=`<svg xmlns="http://www.w3.org/2000/svg" width="${MW*2}" height="${MH*2}" viewBox="${vx} ${vy} ${vw} ${vh}"><rect x="${vx-vw}" y="${vy-vh}" width="${vw*3}" height="${vh*3}" fill="${C.sea}"/><g stroke="${C.edge}" stroke-width="${0.5*px}" stroke-linejoin="round">${ps.join('')}</g><path d="${GEO.border}" fill="none" stroke="${C.border}" stroke-width="${1.1*px}" stroke-linejoin="round"/></svg>`;
+  const img=new Image();const url=URL.createObjectURL(new Blob([map],{type:'image/svg+xml'}));
+  await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src=url});
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  // header
+  ctx.fillStyle=C.ink;ctx.font='400 76px WildGak, Pretendard';ctx.fillText('내 꿈은 세계 정복',PAD,PAD+78);
+  ctx.font='600 28px Pretendard';ctx.fillStyle=C.mute;ctx.fillText(nick?`${nick}의 정복 지도`:'나의 정복 지도',PAD,PAD+128);
+  const G=grouped(),cs=Object.keys(G),ks=Object.keys(S.regions).filter(k=>byK[k]);
+  const st=[[(cs.length/Object.keys(byC).length*100).toFixed(1)+'%','달성도'],[String(cs.length),'나라'],[String(ks.length),'지역']];
+  ctx.textAlign='right';let sx=W-PAD;
+  for(let i=st.length-1;i>=0;i--){const [v,l]=st[i];ctx.font='700 34px Pretendard';const w=Math.max(ctx.measureText(v).width,60);ctx.fillStyle=C.acc;ctx.fillText(v,sx,PAD+128);ctx.font='400 17px Pretendard';ctx.fillStyle=C.mute;ctx.fillText(l,sx,PAD+156);sx-=w+34}
+  ctx.textAlign='left';
+  // map
+  ctx.save();rr(ctx,PAD,mapY,MW,MH,26);ctx.clip();ctx.drawImage(img,PAD,mapY,MW,MH);ctx.restore();URL.revokeObjectURL(url);
+  // list: pick the most detailed layout that fits
+  const order=cs.map(c=>({c,rs:G[c].sort((x,y)=>latest(S.regions[y.k]).localeCompare(latest(S.regions[x.k]))||x.n.localeCompare(y.n,'ko')),l:G[c].map(r=>latest(S.regions[r.k])).sort().pop()||''}))
+    .sort((x,y)=>y.rs.length-x.rs.length||y.l.localeCompare(x.l)||CN[x.c].localeCompare(CN[y.c],'ko'));
+  const avail=listBottom-(listTop+52), IN=24;
+  const layouts=[
+    ()=>{const f='500 21px Pretendard',CHh=40,G2=10;const bl=order.map(o=>{const w=wrapChips(ctx,o.rs.map(r=>r.n),PAD+IN,MW-IN*2,f,CHh,G2);return {o,w,h:IN+26+14+w.height+IN}});
+      const tot=bl.reduce((t,x)=>t+x.h+14,0)-14;if(tot>avail)return null;
+      return y=>{for(const x of bl){ctx.fillStyle=C.card;rr(ctx,PAD,y,MW,x.h,20);ctx.fill();ctx.fillStyle=C.ink;ctx.font='700 24px Pretendard';ctx.fillText(CN[x.o.c],PAD+IN,y+IN+22);
+        ctx.font='400 18px Pretendard';ctx.fillStyle=C.mute;ctx.textAlign='right';ctx.fillText(`${x.o.rs.length}/${byC[x.o.c].length} 지역`,PAD+MW-IN,y+IN+20);ctx.textAlign='left';
+        const cy=y+IN+26+14;ctx.font=f;for(const ch of x.w.chips){ctx.fillStyle=C.bg;rr(ctx,ch.x,cy+ch.y,ch.w,CHh,CHh/2);ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=C.ink;ctx.fillText(ch.t,ch.x+14,cy+ch.y+27)}
+        y+=x.h+14}}},
+    ()=>{const RH=56;if(order.length*(RH+8)-8>avail)return null;
+      return y=>{for(const o of order){ctx.fillStyle=C.card;rr(ctx,PAD,y,MW,RH,16);ctx.fill();ctx.fillStyle=C.ink;ctx.font='700 22px Pretendard';const nm=CN[o.c];ctx.fillText(nm,PAD+20,y+36);
+        const nw=ctx.measureText(nm).width;ctx.font='400 18px Pretendard';ctx.textAlign='right';ctx.fillStyle=C.mute;const cnt=`${o.rs.length}곳`;ctx.fillText(cnt,PAD+MW-20,y+35);const cw=ctx.measureText(cnt).width;ctx.textAlign='left';
+        const maxW=MW-40-nw-cw-36;let t='',rest=o.rs.length;ctx.font='400 19px Pretendard';ctx.fillStyle=C.ink;
+        for(let i=0;i<o.rs.length;i++){const cand=(t?t+', ':'')+o.rs[i].n,suf=i<o.rs.length-1?` 외 ${o.rs.length-i-1}`:'';if(ctx.measureText(cand+suf).width>maxW&&t){t+=` 외 ${o.rs.length-i}`;rest=0;break}t=cand}
+        ctx.fillText(t,PAD+20+nw+18,y+35);y+=RH+8}}},
+    (lim)=>{const f='600 22px Pretendard',CHh=46,G2=10;let list=order.map(o=>`${CN[o.c]} ${o.rs.length}`);let more=0;
+      for(;;){const items=more?list.slice(0,list.length-more).concat([`외 ${more}개 나라`]):list;const w=wrapChips(ctx,items,PAD,MW,f,CHh,G2);
+        if(w.height<=avail||items.length<=1)return y=>{ctx.font=f;for(const ch of w.chips){const last=more&&ch.t.startsWith('외 ');ctx.fillStyle=last?C.bg:C.card;rr(ctx,ch.x,y+ch.y,ch.w,CHh,CHh/2);ctx.fill();if(last){ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke()}ctx.fillStyle=C.ink;ctx.fillText(ch.t,ch.x+14,y+ch.y+31)}};
+        more++}}];
+  ctx.fillStyle=C.ink;ctx.font='700 30px Pretendard';ctx.fillText('정복한 곳',PAD,listTop+30);
+  if(!order.length){ctx.font='400 22px Pretendard';ctx.fillStyle=C.mute;ctx.fillText('아직 정복한 곳이 없어요.',PAD,listTop+90)}
+  else{let draw=null;for(const L of layouts){draw=L();if(draw)break}draw(listTop+52)}
+  // footer
+  ctx.font='400 17px Pretendard';ctx.fillStyle=C.mute;const d=new Date();
+  ctx.fillText(`m2nja201.github.io/world-conquest · ${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`,PAD,footY);
+  return await new Promise(ok=>cv.toBlob(ok,'image/png'));
+}
+$('smf').onsubmit=async e=>{e.preventDefault();const nick=$('nk').value.trim().slice(0,20);try{localStorage.setItem('nick',nick)}catch{}
+  $('smg').disabled=true;$('smm').textContent='이미지 만드는 중…';
+  try{const blob=await makePng(nick);const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=`${nick||'my'}-world-conquest.png`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+    $('smm').textContent='저장했어요! 다운로드 폴더를 확인해 주세요.';window.__lastShare=blob}
+  catch(err){console.error(err);$('smm').textContent='이미지를 만들지 못했어요. 다시 시도해 주세요.'}
+  $('smg').disabled=false};
 /* ---- search ---- */
 const IDX=[];
 for(const c in CN)if(byC[c])IDX.push({t:'나라',n:CN[c],s:byC[c][0].e===CN[c]?'':'',c,q:(CN[c]+' '+c).toLowerCase()});
@@ -293,7 +379,7 @@ $('bkc').onclick=async()=>{try{await navigator.clipboard.writeText($('bk').value
 $('bkr').onclick=()=>{try{S=clean(JSON.parse($('bk').value));$('bkm').textContent='복원했어요.';commit()}catch{$('bkm').textContent='형식이 올바르지 않아요.'}};
 
 /* ---- storage ---- */
-function clean(o){const th=(o&&o.theme)||{};const out={regions:{},theme:{brown:HEX.test(th.brown)?th.brown:DEF.brown,sel:HEX.test(th.sel)?th.sel:DEF.sel,acc:HEX.test(th.acc)?th.acc:DEF.acc,sea:HEX.test(th.sea)?th.sea:''}};const src=(o&&o.regions)||{};
+function clean(o){const th=(o&&o.theme)||{};const out={regions:{},theme:{brown:HEX.test(th.brown)?th.brown:DEF.brown,sel:HEX.test(th.sel)?th.sel:DEF.sel,acc:HEX.test(th.acc)?th.acc:DEF.acc,sea:HEX.test(th.sea)?th.sea:DEF.sea}};const src=(o&&o.regions)||{};
   const AL=GEO.alias||{};for(const k0 in src){const k=byK[k0]?k0:AL[k0];if(!k||!byK[k])continue;const x=src[k0]||{};if(out.regions[k]){x.v=[...(out.regions[k].v||[]),...(Array.isArray(x.v)?x.v:[])]}
     const seen=new Set(),vv=[];for(let e of (Array.isArray(x.v)?x.v:[])){if(typeof e==='string')e={d:e,t:''};if(!e||typeof e.d!=='string'||!/^\d{4}-(0[1-9]|1[0-2])$/.test(e.d))continue;
       const t=typeof e.t==='string'?e.t.trim().slice(0,40):'';const id=e.d+'|'+t;if(seen.has(id))continue;seen.add(id);vv.push({d:e.d,t})}
