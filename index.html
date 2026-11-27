@@ -112,7 +112,7 @@ textarea{width:100%;min-height:90px;font:13px/1.4 monospace;border:1px solid var
 <header>
   <div><h1>내 꿈은 세계 정복</h1><div class="en" style="margin-top:8px;font-size:12px">지역을 누르거나 나라·지역·도시 이름으로 검색해서 정복 기록을 남겨 보세요</div></div>
   <div class="stats">
-    <div class="stat big"><b id="sP">0%</b><span>달성도 (나라 기준)</span><div class="bar"><i id="sBar" style="width:0"></i></div></div>
+    <div class="stat big"><b id="sP">0%</b><span>정복률 (나라 기준)</span><div class="bar"><i id="sBar" style="width:0"></i></div></div>
     <div class="stat"><b id="sN">0</b><span>정복한 나라</span></div>
     <div class="stat"><b id="sR">0</b><span>정복한 지역</span></div>
     <div class="stat"><b id="sT">0</b><span>방문 기록</span></div>
@@ -325,7 +325,7 @@ async function makePng(nick){
   ctx.fillStyle=C.ink;ctx.font='400 76px WildGak, Pretendard';ctx.fillText('내 꿈은 세계 정복',PAD,PAD+78);
   ctx.font='600 28px Pretendard';ctx.fillStyle=C.mute;ctx.fillText(nick?`${nick}의 정복 지도`:'나의 정복 지도',PAD,PAD+128);
   const G=grouped(),cs=Object.keys(G),ks=Object.keys(S.regions).filter(k=>byK[k]);
-  const st=[[(cs.length/Object.keys(byC).length*100).toFixed(1)+'%','달성도'],[String(cs.length),'나라'],[String(ks.length),'지역']];
+  const st=[[(cs.length/Object.keys(byC).length*100).toFixed(1)+'%','정복률'],[String(cs.length),'나라'],[String(ks.length),'지역']];
   ctx.textAlign='right';let sx=W-PAD;
   for(let i=st.length-1;i>=0;i--){const [v,l]=st[i];ctx.font='700 34px Pretendard';const w=Math.max(ctx.measureText(v).width,60);ctx.fillStyle=C.acc;ctx.fillText(v,sx,PAD+128);ctx.font='400 17px Pretendard';ctx.fillStyle=C.mute;ctx.fillText(l,sx,PAD+156);sx-=w+34}
   ctx.textAlign='left';
