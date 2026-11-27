@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>내 꿈은 세계 정복</title>
+<style>
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'WildGak';src:url('fonts/KIMWILDgag-BOLD.ttf') format('truetype');font-weight:400 900;font-display:swap}
+/* VOICE: 장난스럽지만 깔끔한 개인 여행 기록장
+   IDEA: 다녀온 지역을 하나씩 칠해 가는 '정복' 지도
+   PICTURE: 화면 대부분을 차지하는 확대/이동 가능한 지역 단위 세계 지도
+   COLOUR and TYPE: 연한 하늘색 바다, 고동색 정복 지역, 연핑크 선택·포인트 / 와일드각(제목) + Pretendard(본문)
+   LAYOUT: 상단 제목·달성도, 지도(좌) + 지역 패널(우), 900px 이하 세로 쌓기 */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#0e1a20);--ink:light-dark(#2b2326,#eef2f4);--mute:light-dark(#6f6669,#9fb0b6);
+--sea:light-dark(#eaf6fd,#132a35);--land:light-dark(#e8e6e3,#2e3b41);--landh:light-dark(#d9d6d2,#3d4c53);
+--edge:light-dark(#ffffff,#22313a);--border:light-dark(#9c9592,#7d8d94);
+--sel:#f7b6c8;--acc:#e88aa8;--brown:#6d4c41;--acc-ink:#2b1a20}
+:root{--card:color-mix(in srgb,var(--acc) 8%,var(--bg));--line:color-mix(in srgb,var(--acc) 22%,var(--bg))}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Pretendard",system-ui,sans-serif;overflow-x:clip}
+h1{font:400 clamp(36px,5.4vw,54px)/1.05 "WildGak","Pretendard",sans-serif;font-synthesis:none;margin:0;text-wrap:balance}
+h2{font:700 19px/1.25 "Pretendard",sans-serif;margin:0}
+header{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:end;justify-content:space-between;padding:24px max(3vw,16px) 16px}
+.stats{display:flex;gap:28px;flex-wrap:wrap;align-items:end}
+.stat{text-align:center}.stat b{display:block;font:700 28px/1 "Pretendard",sans-serif;color:var(--acc)}
+.stat.big b{font-size:38px}
+.stat span{font-size:13px;color:var(--mute)}
+.bar{height:8px;background:var(--line);border-radius:99px;margin-top:6px;overflow:hidden;width:140px;margin-inline:auto}.bar i{display:block;height:100%;background:var(--acc)}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;padding:0 max(3vw,16px) 24px;max-width:1600px;margin:0 auto}
+.mapbox{position:relative;background:var(--sea);border-radius:14px;overflow:hidden;height:min(72vh,680px);min-height:320px;touch-action:none;cursor:grab}
+.mapbox.drag{cursor:grabbing}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block}
+#map path.c{fill:var(--land);stroke:var(--edge);stroke-width:.35;vector-effect:non-scaling-stroke;cursor:pointer}
+#map path.c:hover{fill:var(--landh)}
+#map path.c.v{fill:var(--brown)}
+#map path.c.v:hover{fill:color-mix(in srgb,var(--brown) 85%,#fff)}
+#map path.c.sel{fill:var(--sel);stroke:color-mix(in srgb,var(--sel) 55%,#000);stroke-width:2}
+#map path.b{fill:none;stroke:var(--border);stroke-width:.9;vector-effect:non-scaling-stroke;pointer-events:none}
+.zoom{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:44px;height:44px;font-size:20px;padding:0}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;padding:4px 9px;border-radius:6px;white-space:nowrap;opacity:0;transform:translate(-50%,-140%)}
+.save{position:absolute;left:12px;top:12px;font-size:13px;background:var(--bg);color:var(--mute);padding:4px 10px;border-radius:99px}
+.legend{position:absolute;left:12px;bottom:12px;display:flex;gap:12px;font-size:13px;background:var(--bg);padding:4px 10px;border-radius:99px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+aside{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border-radius:14px;padding:18px}
+button,select,input{font:inherit;font-size:16px;color:inherit}
+button{min-height:44px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 14px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700;width:100%}
+button.ghost{border:0;background:none;color:var(--mute);text-decoration:underline;padding:0 4px}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+select,input{min-height:44px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 10px}
+.search{position:relative}.search input{width:100%}
+.res{position:absolute;z-index:5;left:0;right:0;top:48px;background:var(--bg);border:1px solid var(--line);border-radius:10px;max-height:320px;overflow:auto;display:none;box-shadow:0 10px 30px #0003}
+.res button{display:flex;justify-content:space-between;gap:10px;width:100%;border:0;border-radius:0;text-align:left;background:none}
+.res button:hover,.res button.on{background:var(--card)}
+.res small,.en{color:var(--mute);font-size:13px}
+.tag{font-size:12px;border-radius:99px;padding:0 8px;background:var(--card);color:var(--mute);white-space:nowrap;align-self:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;padding:0;list-style:none}
+.chips li{display:flex;align-items:center;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:2px 2px 2px 12px;white-space:nowrap}
+.chips li button{min-height:32px;width:32px;padding:0;border:0;background:none;color:var(--mute);border-radius:50%}
+.add{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+.lbl{font-size:13px;color:var(--mute);margin:14px 0 0}
+.empty{color:var(--mute);font-size:15px}
+.list{list-style:none;margin:8px 0 0;padding:0;max-height:360px;overflow:auto}
+.list>li{padding:6px 0;border-bottom:1px solid var(--line)}.list>li:last-child{border:0}
+.list .cn{display:flex;justify-content:space-between;font-weight:700}.list .cn small{font-weight:400;color:var(--mute)}
+.rg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.rg button{min-height:32px;font-size:14px;padding:0 10px;border-radius:99px}
+.rlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-height:260px;overflow:auto}
+.rlist button{min-height:34px;font-size:14px;padding:0 10px;border-radius:99px}
+.rlist button.v{background:var(--brown);border-color:var(--brown);color:#fff}
+.yr{padding:10px 0;border-bottom:1px solid var(--line)}.yr:last-child{border:0;padding-bottom:0}
+.yr h3{font-size:16px;margin:0 0 6px;display:flex;justify-content:space-between;align-items:baseline}.yr h3 small{font-size:13px;font-weight:400;color:var(--mute)}
+.yr .rg button{background:var(--bg)}
+#years{height:260px;min-height:90px;max-height:85vh;overflow:auto;resize:vertical;padding-right:4px;border-bottom:1px dashed var(--line)}
+.rz{font-size:12px;color:var(--mute);text-align:right;margin:4px 0 0}
+.arow{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.confirm{margin-top:10px;padding:12px;border-radius:10px;background:var(--bg);font-size:15px}
+.row{display:flex;gap:8px;margin-top:8px}
+details{font-size:15px}summary{cursor:pointer;color:var(--mute);min-height:32px}
+textarea{width:100%;min-height:90px;font:13px/1.4 monospace;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:inherit;padding:8px}
+.fab{position:fixed;right:16px;bottom:16px;z-index:20;box-shadow:0 6px 20px #0003;font-weight:700;background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.tp{position:fixed;right:16px;bottom:72px;z-index:20;width:min(300px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 12px 40px #0004;display:none}
+.tp.open{display:block}
+.tp h2{font-size:17px;margin-bottom:8px}
+.tp label{display:grid;grid-template-columns:1fr 56px 78px;align-items:center;gap:10px;padding:6px 0;font-size:15px}
+.tp input[type=color]{width:56px;height:40px;min-height:40px;padding:2px;border-radius:8px;cursor:pointer}
+.tp code{font-size:13px;color:var(--mute)}
+@media(min-width:901px){.wrap{align-items:start}.mapbox{position:sticky;top:16px;height:min(calc(100vh - 32px),820px)}}
+@media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}.mapbox{height:min(60vh,520px)}}
+@media(max-width:600px){.mapbox{height:auto;min-height:0;aspect-ratio:1000/560}.legend{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>내 꿈은 세계 정복</h1><div class="en" style="margin-top:8px;font-size:12px">지역을 누르거나 나라·지역·도시 이름으로 검색해서 정복 기록을 남겨 보세요</div></div>
+  <div class="stats">
+    <div class="stat big"><b id="sP">0%</b><span>달성도 (나라 기준)</span><div class="bar"><i id="sBar" style="width:0"></i></div></div>
+    <div class="stat"><b id="sN">0</b><span>정복한 나라</span></div>
+    <div class="stat"><b id="sR">0</b><span>정복한 지역</span></div>
+    <div class="stat"><b id="sT">0</b><span>방문 기록</span></div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="mapbox" id="box">
+    <svg id="map" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet" aria-label="세계 지도"><g id="g"></g></svg>
+    <div class="tip" id="tip"></div>
+    <div class="save" id="save">불러오는 중…</div>
+    <div class="legend"><span><i style="background:var(--brown)"></i>정복</span><span><i style="background:var(--sel)"></i>선택</span></div>
+    <div class="zoom"><button id="zi" aria-label="확대">+</button><button id="zo" aria-label="축소">−</button><button id="zr" aria-label="처음 보기" style="font-size:15px">⟲</button></div>
+  </div>
+  <aside>
+    <div class="card" id="auth" style="padding:14px 18px"></div>
+    <div class="search"><input id="q" type="search" placeholder="검색 (예: 후쿠오카, 니스, Paris)" autocomplete="off" aria-label="나라, 지역, 도시 검색"><div class="res" id="res"></div></div>
+    <div class="card" id="panel"></div>
+    <div class="card"><h2>연도별 정복</h2><div id="years"></div><p class="rz">오른쪽 아래 모서리를 끌어서 크기 조절</p></div>
+    <div class="card"><h2>정복한 곳</h2><ul class="list" id="list"></ul></div>
+    <details class="card"><summary>백업 · 복원</summary>
+      <p class="en">아래 내용을 복사해 두면 언제든 다시 붙여넣어 복원할 수 있어요.</p>
+      <textarea id="bk" aria-label="백업 데이터"></textarea>
+      <div class="row"><button id="bkc">복사</button><button id="bkr">붙여넣은 내용으로 복원</button></div>
+      <div id="bkm" class="en"></div>
+    </details>
+    <p class="en" style="text-align:center;font-size:12px;margin:0 0 64px;line-height:1.7"><strong style="color:var(--ink)">© 2026 원민재. All rights reserved.</strong><br>이 사이트의 디자인과 코드는 원민재에게 저작권이 있으며, 무단 복제·배포를 금지합니다.<br>제목 폰트: 와일드각 (김씨폰트공방) · 본문 폰트: Pretendard · 지도 데이터: Natural Earth</p>
+  </aside>
+</div>
+<button class="fab" id="fab" aria-expanded="false" aria-controls="tp">색 설정</button>
+<div class="tp" id="tp" role="dialog" aria-label="색 설정">
+  <h2>색 설정</h2>
+  <label>정복한 지역<input type="color" data-t="brown"><code></code></label>
+  <label>선택한 지역<input type="color" data-t="sel"><code></code></label>
+  <label>사이트 포인트<input type="color" data-t="acc"><code></code></label>
+  <label>바다<input type="color" data-t="sea"><code></code></label>
+  <div class="row"><button id="tpr">기본값으로</button><button id="tpc">닫기</button></div>
+</div>
+<script src="vendor/supabase.js"></script>
+<script>
+fetch('map.json').then(r=>r.json()).then(GEO=>{
+const R=GEO.regions, CN=GEO.countries, byK=Object.fromEntries(R.map(r=>[r.k,r]));
+const byC={};R.forEach(r=>(byC[r.c]??=[]).push(r));
+for(const c in byC)byC[c].sort((a,b)=>a.n.localeCompare(b.n,'ko'));
+const NC=Object.keys(byC).length;
+const NOW=new Date(), YEAR=NOW.getFullYear();
+let LY=YEAR, LM=NOW.getMonth()+1;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fmt=v=>{const[y,m]=v.split('-');return `${y}년 ${+m}월`};
+const latest=v=>v.v.length?v.v.reduce((a,b)=>a>b.d?a:b.d,''):'';
+const vlab=x=>fmt(x.d)+(x.t?` · ${x.t}`:'');
+const DEF={brown:'#6d4c41',sel:'#f7b6c8',acc:'#e88aa8',sea:''};
+let S={regions:{},theme:{...DEF}}, sel=null, selC=null, confirmOff=false, ready=false;
+let ref=null, saving=false, again=false, timer=null;
+
+/* ---- map ---- */
+const svg=$('map'), g=$('g'), box=$('box'), tip=$('tip');
+g.innerHTML=R.map(r=>`<path class="c" data-k="${esc(r.k)}" d="${r.d}"/>`).join('')+`<path class="b" d="${GEO.border}"/>`;
+const P={}; g.querySelectorAll('path.c').forEach(p=>P[p.dataset.k]=p);
+const borderEl=g.querySelector('path.b');
+let T={x:0,y:0,s:1};
+const apply=()=>g.setAttribute('transform',`translate(${T.x} ${T.y}) scale(${T.s})`);
+const clampT=()=>{T.s=Math.min(80,Math.max(1,T.s));T.x=Math.min(0,Math.max(1000-1000*T.s,T.x));T.y=Math.min(0,Math.max(520-520*T.s,T.y))};
+const toSvg=(cx,cy)=>{const pt=svg.createSVGPoint();pt.x=cx;pt.y=cy;return pt.matrixTransform(svg.getScreenCTM().inverse())};
+const zoomAt=(f,px,py)=>{const ns=Math.min(80,Math.max(1,T.s*f));const k=ns/T.s;T.x=px-(px-T.x)*k;T.y=py-(py-T.y)*k;T.s=ns;clampT();apply()};
+box.addEventListener('wheel',e=>{e.preventDefault();const p=toSvg(e.clientX,e.clientY);zoomAt(Math.exp(-e.deltaY*0.0015),p.x,p.y)},{passive:false});
+$('zi').onclick=()=>zoomAt(1.6,500,260);$('zo').onclick=()=>zoomAt(1/1.6,500,260);$('zr').onclick=()=>{T={x:0,y:0,s:1};apply()};
+const ptrs=new Map(); let moved=0, last=null, pinch=null;
+box.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;last={x:e.clientX,y:e.clientY};
+  if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)}}});
+box.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId)){hover(e);return}
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2&&pinch){const[a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);const m=toSvg((a.x+b.x)/2,(a.y+b.y)/2);zoomAt(d/pinch.d,m.x,m.y);pinch.d=d;moved=99;return}
+  const dx=e.clientX-last.x, dy=e.clientY-last.y; moved+=Math.abs(dx)+Math.abs(dy);
+  if(moved>6){box.classList.add('drag');box.setPointerCapture?.(e.pointerId);const r=svg.getScreenCTM().a;T.x+=dx/r;T.y+=dy/r;clampT();apply();tip.style.opacity=0}
+  last={x:e.clientX,y:e.clientY}});
+const up=e=>{const had=ptrs.has(e.pointerId);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;box.classList.remove('drag');
+  if(had&&moved<=6&&e.type==='pointerup'){const t=document.elementFromPoint(e.clientX,e.clientY);const p=t&&t.closest&&t.closest('path.c');if(p)select(p.dataset.k)}};
+box.addEventListener('pointerup',up);box.addEventListener('pointercancel',up);
+box.addEventListener('pointerleave',()=>{tip.style.opacity=0});
+function hover(e){const p=e.target.closest&&e.target.closest('path.c');if(!p){tip.style.opacity=0;return}
+  const r=byK[p.dataset.k], b=box.getBoundingClientRect(), v=S.regions[r.k];
+  tip.textContent=`${r.n} · ${CN[r.c]}`+(v?` · ${v.v.length?v.v.length+'회':'정복'}`:'');tip.style.left=(e.clientX-b.left)+'px';tip.style.top=(e.clientY-b.top)+'px';tip.style.opacity=1}
+function fit(b,max){const need=Math.min(max,Math.max(1,0.85*Math.min(1000/Math.max(b.width,.5),520/Math.max(b.height,.5))));
+  T.s=need;T.x=500-(b.x+b.width/2)*need;T.y=260-(b.y+b.height/2)*need;clampT();apply()}
+function focusRegion(k){const p=P[k];if(!p)return;const b=p.getBBox();
+  const pb=b.width*b.height;const s=Math.max(T.s,Math.min(30,0.25*Math.min(1000/Math.max(b.width,.5),520/Math.max(b.height,.5))));
+  T.s=s;T.x=500-(b.x+b.width/2)*s;T.y=260-(b.y+b.height/2)*s;clampT();apply()}
+function focusCountry(c){const bs=byC[c].map(r=>P[r.k].getBBox());let big=bs.reduce((a,b)=>a.width*a.height>=b.width*b.height?a:b);
+  const cx=big.x+big.width/2, cy=big.y+big.height/2;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const b of bs){const mx=b.x+b.width/2,my=b.y+b.height/2;if(Math.abs(mx-cx)>90||Math.abs(my-cy)>70)continue;x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height)}
+  fit({x:x0,y:y0,width:x1-x0,height:y1-y0},40)}
+
+/* ---- render ---- */
+let painted={};
+function paint(){for(const k in P){const v=!!S.regions[k],s=k===sel,p=P[k],o=painted[k]||0,n=(v?1:0)|(s?2:0);if(o!==n){p.classList.toggle('v',v);p.classList.toggle('sel',s);painted[k]=n}}
+  if(sel&&P[sel]){g.insertBefore(P[sel],borderEl)}}
+function grouped(){const G={};for(const k in S.regions){const r=byK[k];if(!r)continue;(G[r.c]??=[]).push(r)}return G}
+function stats(){const G=grouped(),cs=Object.keys(G),ks=Object.keys(S.regions).filter(k=>byK[k]);
+  const pct=(cs.length/NC*100);$('sP').textContent=pct.toFixed(1)+'%';$('sBar').style.width=Math.min(100,pct)+'%';
+  $('sN').textContent=cs.length;$('sR').textContent=ks.length;$('sT').textContent=ks.reduce((a,k)=>a+S.regions[k].v.length,0);
+  const rows=cs.map(c=>({c,rs:G[c].sort((a,b)=>latest(S.regions[b.k]).localeCompare(latest(S.regions[a.k]))||a.n.localeCompare(b.n,'ko')),l:G[c].map(r=>latest(S.regions[r.k])).sort().pop()||''}))
+    .sort((a,b)=>b.l.localeCompare(a.l)||CN[a.c].localeCompare(CN[b.c],'ko'));
+  $('list').innerHTML=rows.length?rows.map(o=>`<li><div class="cn"><span>${esc(CN[o.c])}</span><small>${o.rs.length}/${byC[o.c].length} 지역</small></div><div class="rg">${o.rs.map(r=>{const v=S.regions[r.k];return `<button data-k="${esc(r.k)}">${esc(r.n)}${v.v.length?` · ${v.v.length}회`:''}</button>`}).join('')}</div></li>`).join('')
+    :'<li class="empty" style="border:0">아직 정복한 곳이 없어요. 지도에서 지역을 눌러 보세요.</li>';
+  const Y={};for(const k of ks){const r=byK[k];for(const x of S.regions[k].v){const y=x.d.slice(0,4);(Y[y]??={})[r.c]??=new Set();if(x.t)Y[y][r.c].add(x.t)}}
+  const ys=Object.keys(Y).sort((a,b)=>b-a);
+  $('years').innerHTML=ys.length?ys.map(y=>{const cs2=Object.keys(Y[y]).sort((a,b)=>CN[a].localeCompare(CN[b],'ko'));
+    return `<div class="yr"><h3>${y}년<small>${cs2.length}개 나라</small></h3><div class="rg">${cs2.map(c=>{const t=[...Y[y][c]];return `<button data-c="${esc(c)}" title="${esc(t.join(', '))}">${esc(CN[c])}${t.length?` <small style="color:var(--mute)">${esc(t.slice(0,3).join('·'))}${t.length>3?' 외':''}</small>`:''}</button>`}).join('')}</div></div>`}).join('')
+    :'<p class="empty">방문 날짜를 추가하면 연도별로 모아서 보여줘요.</p>';
+  $('bk').value=JSON.stringify(S)}
+function panel(){const el=$('panel');
+  if(selC&&!sel){const rs=byC[selC],n=rs.filter(r=>S.regions[r.k]).length;
+    el.innerHTML=`<h2>${esc(CN[selC])}</h2><div class="en">지역 ${rs.length}곳 중 ${n}곳 정복</div><p class="lbl">지역을 골라 기록하세요</p><div class="rlist">${rs.map(r=>`<button data-k="${esc(r.k)}" class="${S.regions[r.k]?'v':''}">${esc(r.n)}</button>`).join('')}</div>`;
+    el.querySelectorAll('.rlist button').forEach(b=>b.onclick=()=>{select(b.dataset.k);focusRegion(b.dataset.k)});return}
+  if(!sel){el.innerHTML='<h2>지역을 골라 주세요</h2><p class="empty">지도에서 지역을 누르거나 위에서 검색하면 여기서 정복 표시와 방문 날짜를 기록할 수 있어요. 드래그로 이동, 휠·핀치로 확대돼요.</p>';return}
+  const r=byK[sel], v=S.regions[sel];
+  let h=`<h2>${esc(r.n)}</h2><div class="en">${esc(r.e)} · <button class="ghost" id="toC" style="min-height:0">${esc(CN[r.c])}</button></div>`;
+  if(!v){h+=`<p class="empty">아직 정복하지 않은 곳이에요.</p><button class="pri" id="mark">정복했어요! 지도에 칠하기</button>`}
+  else{
+    h+=`<p class="lbl">방문 기록 (${v.v.length}회)</p>`;
+    h+=v.v.length?`<ul class="chips">${v.v.map((x,i)=>`<li>${esc(vlab(x))}<button data-i="${i}" aria-label="${esc(vlab(x))} 삭제">✕</button></li>`).join('')}</ul>`:'<p class="empty" style="margin:6px 0 12px">언제 갔는지 추가해 보세요.</p>';
+    h+=`<div class="add"><select id="yy" aria-label="연도">${Array.from({length:YEAR-1949},(_,i)=>YEAR-i).map(y=>`<option ${y===LY?'selected':''}>${y}</option>`).join('')}</select>
+      <select id="mm" aria-label="월">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${i+1===LM?'selected':''}>${i+1}월</option>`).join('')}</select>
+      <input id="ct" maxlength="40" placeholder="도시 (선택, 예: 니스)" aria-label="도시 이름" style="grid-column:1/-2">
+      <button id="addd" style="grid-column:-2/-1;grid-row:1/3">추가</button></div><div id="dup" class="en"></div>`;
+    h+=confirmOff?`<div class="confirm">정복 표시와 날짜 ${v.v.length}개가 지워져요. 진행할까요?<div class="row"><button id="offy">지우기</button><button id="offn">취소</button></div></div>`
+      :`<div style="margin-top:14px"><button class="ghost" id="off">정복 표시 해제</button></div>`;
+  }
+  el.innerHTML=h;
+  const on=(id,f)=>{const b=$(id);if(b)b.onclick=f};
+  on('toC',()=>{selC=r.c;sel=null;render();focusCountry(r.c)});
+  on('mark',()=>{S.regions[sel]={v:[]};commit()});
+  on('addd',()=>{LY=+$('yy').value;LM=+$('mm').value;const d=`${LY}-${String(LM).padStart(2,'0')}`,t=$('ct').value.trim().slice(0,40);
+    if(v.v.some(x=>x.d===d&&x.t===t)){$('dup').textContent='이미 있는 기록이에요.';return}v.v.push({d,t});v.v.sort((a,b)=>a.d.localeCompare(b.d)||a.t.localeCompare(b.t,'ko'));commit()});
+  {const ct=$('ct');if(ct)ct.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('addd').click()}})}
+  on('off',()=>{if(!v.v.length){delete S.regions[sel];commit()}else{confirmOff=true;panel()}});
+  on('offy',()=>{delete S.regions[sel];confirmOff=false;commit()});on('offn',()=>{confirmOff=false;panel()});
+  el.querySelectorAll('.chips button').forEach(b=>b.onclick=()=>{v.v.splice(+b.dataset.i,1);commit()});
+}
+const HEX=/^#[0-9a-f]{6}$/i;
+const lum=h=>{const c=[1,3,5].map(i=>{let v=parseInt(h.substr(i,2),16)/255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+function applyTheme(){const t=S.theme,st=document.documentElement.style;
+  st.setProperty('--brown',t.brown);st.setProperty('--sel',t.sel);st.setProperty('--acc',t.acc);st.setProperty('--acc-ink',lum(t.acc)>.4?'#2b1a20':'#ffffff');
+  if(t.sea)st.setProperty('--sea',t.sea);else st.removeProperty('--sea');
+  const seaNow=getComputedStyle($('box')).backgroundColor.match(/\d+/g);
+  document.querySelectorAll('.tp input').forEach(i=>{const k=i.dataset.t;let v=t[k];if(!v&&seaNow)v='#'+seaNow.slice(0,3).map(n=>(+n).toString(16).padStart(2,'0')).join('');i.value=v;i.nextElementSibling.textContent=v.toUpperCase()})}
+function render(){applyTheme();paint();stats();panel()}
+function select(k){sel=k;selC=byK[k].c;confirmOff=false;render()}
+function commit(){render();persist()}
+{const yb=$('years');try{const h=localStorage.getItem('years-h');if(h)yb.style.height=h}catch{}let rt;new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(()=>{try{localStorage.setItem('years-h',yb.style.height||'')}catch{}},300)}).observe(yb)}
+$('years').onclick=e=>{const b=e.target.closest('button[data-c]');if(b){selC=b.dataset.c;sel=null;confirmOff=false;render();focusCountry(selC)}};
+$('list').onclick=e=>{const b=e.target.closest('button[data-k]');if(b){select(b.dataset.k);focusRegion(b.dataset.k)}};
+
+const tp=$('tp'),fab=$('fab');
+fab.onclick=()=>{const o=tp.classList.toggle('open');fab.setAttribute('aria-expanded',o)};
+$('tpc').onclick=()=>{tp.classList.remove('open');fab.setAttribute('aria-expanded',false)};
+$('tpr').onclick=()=>{S.theme={...DEF};commit()};
+tp.querySelectorAll('input').forEach(i=>{i.addEventListener('input',()=>{S.theme[i.dataset.t]=i.value;applyTheme()});i.addEventListener('change',()=>{S.theme[i.dataset.t]=i.value;commit()})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')tp.classList.remove('open')});
+/* ---- search ---- */
+const IDX=[];
+for(const c in CN)if(byC[c])IDX.push({t:'나라',n:CN[c],s:byC[c][0].e===CN[c]?'':'',c,q:(CN[c]+' '+c).toLowerCase()});
+R.forEach(r=>IDX.push({t:'지역',n:r.n,s:`${r.e} · ${CN[r.c]}`,k:r.k,q:(r.n+' '+r.e).toLowerCase()}));
+GEO.cities.forEach(([ko,en,k])=>{const r=byK[k];if(r)IDX.push({t:'도시',n:ko,s:`${en} · ${r.n}, ${CN[r.c]}`,k,q:(ko+' '+en).toLowerCase()})});
+const q=$('q'), res=$('res'); let hits=[], hi=0;
+const rank={'나라':0,'지역':1,'도시':2};
+function showRes(){const t=q.value.trim().toLowerCase();if(!t){res.style.display='none';return}
+  const sc=o=>{const ws=o.q.split(' ');return o.n.toLowerCase()===t||ws.includes(t)||o.q.endsWith(' '+t)?0:ws.some(w=>w.startsWith(t))?1:2};
+  hits=IDX.filter(o=>o.q.includes(t)).map(o=>[sc(o),o]).sort((a,b)=>a[0]-b[0]||rank[a[1].t]-rank[b[1].t]).slice(0,40).map(x=>x[1]);hi=0;
+  res.innerHTML=hits.length?hits.map((o,i)=>`<button data-i="${i}" class="${i===0?'on':''}"><span>${esc(o.n)}<br><small>${esc(o.s||'')}</small></span><span class="tag">${o.t}${o.k&&S.regions[o.k]?' · 정복':''}</span></button>`).join(''):'<div class="empty" style="padding:10px">찾는 곳이 없어요</div>';res.style.display='block'}
+const pick=o=>{if(o.c){selC=o.c;sel=null;confirmOff=false;render();focusCountry(o.c)}else{select(o.k);focusRegion(o.k)}q.value='';res.style.display='none'};
+q.addEventListener('input',showRes);
+q.addEventListener('keydown',e=>{if(!hits.length)return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();hi=(hi+(e.key==='ArrowDown'?1:-1)+hits.length)%hits.length;res.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===hi))}
+  else if(e.key==='Enter'){e.preventDefault();pick(hits[hi])}else if(e.key==='Escape'){res.style.display='none'}});
+res.onclick=e=>{const b=e.target.closest('button[data-i]');if(b)pick(hits[+b.dataset.i])};
+document.addEventListener('click',e=>{if(!e.target.closest('.search'))res.style.display='none'});
+
+/* ---- backup ---- */
+$('bkc').onclick=async()=>{try{await navigator.clipboard.writeText($('bk').value);$('bkm').textContent='복사했어요.'}catch{$('bk').select();$('bkm').textContent='선택된 내용을 직접 복사해 주세요.'}};
+$('bkr').onclick=()=>{try{S=clean(JSON.parse($('bk').value));$('bkm').textContent='복원했어요.';commit()}catch{$('bkm').textContent='형식이 올바르지 않아요.'}};
+
+/* ---- storage ---- */
+function clean(o){const th=(o&&o.theme)||{};const out={regions:{},theme:{brown:HEX.test(th.brown)?th.brown:DEF.brown,sel:HEX.test(th.sel)?th.sel:DEF.sel,acc:HEX.test(th.acc)?th.acc:DEF.acc,sea:HEX.test(th.sea)?th.sea:''}};const src=(o&&o.regions)||{};
+  const AL=GEO.alias||{};for(const k0 in src){const k=byK[k0]?k0:AL[k0];if(!k||!byK[k])continue;const x=src[k0]||{};if(out.regions[k]){x.v=[...(out.regions[k].v||[]),...(Array.isArray(x.v)?x.v:[])]}
+    const seen=new Set(),vv=[];for(let e of (Array.isArray(x.v)?x.v:[])){if(typeof e==='string')e={d:e,t:''};if(!e||typeof e.d!=='string'||!/^\d{4}-(0[1-9]|1[0-2])$/.test(e.d))continue;
+      const t=typeof e.t==='string'?e.t.trim().slice(0,40):'';const id=e.d+'|'+t;if(seen.has(id))continue;seen.add(id);vv.push({d:e.d,t})}
+    vv.sort((a,b)=>a.d.localeCompare(b.d)||a.t.localeCompare(b.t,'ko'));out.regions[k]={v:vv}}return out}
+const LK='conquest-map-v2';
+const SB_URL='https://hzgaxmfqyobtgsmsxbhe.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6Z2F4bWZxeW9idGdzbXN4YmhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU3NDYwNTYsImV4cCI6MjExMTMyMjA1Nn0.fsuoeuyAEuAYln4_-Ge2Lo5UJXmUgqm2bUvSR1bRuPo';
+const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,detectSessionInUrl:true}}):null;
+let uid=null;
+const status=t=>{$('save').textContent=t};
+function local(){try{localStorage.setItem(LK,JSON.stringify(S))}catch{}}
+function persist(){local();if(!uid){status('이 브라우저에만 저장됨 · 로그인하면 계정에 저장돼요');return}clearTimeout(timer);status('저장 중…');timer=setTimeout(flush,600)}
+async function flush(){if(saving){again=true;return}saving=true;
+  try{const {error}=await sb.from('maps').upsert({user_id:uid,data:JSON.parse(JSON.stringify(S)),updated_at:new Date().toISOString()});if(error)throw error;status('저장됨')}
+  catch(e){status('저장 실패 · 잠시 후 다시 시도해 주세요')}
+  saving=false;if(again){again=false;flush()}}
+try{const l=localStorage.getItem(LK);if(l)S=clean(JSON.parse(l))}catch{}
+render();
+const authEl=$('auth');
+function authUI(user){
+  if(!sb){authEl.innerHTML='<p class="empty">로그인 기능을 불러오지 못했어요. 이 브라우저에만 저장돼요.</p>';return}
+  if(user){authEl.innerHTML=`<div class="arow"><span class="en">로그인됨 · <b style="color:var(--ink)">${esc(user.email||'')}</b></span><button class="ghost" id="lo">로그아웃</button></div>`;
+    $('lo').onclick=async()=>{await sb.auth.signOut();location.reload()};return}
+  authEl.innerHTML=`<p class="en" style="margin:0 0 8px">이메일로 로그인하면 어느 기기에서든 기록이 이어져요. 비밀번호는 없어요.</p>
+    <form id="lf" class="arow"><input id="em" type="email" required placeholder="이메일 주소" autocomplete="email" aria-label="이메일 주소" style="flex:1"><button class="pri" style="width:auto" id="lb">로그인 링크 받기</button></form><div id="lm" class="en" style="margin-top:6px"></div>`;
+  $('lf').onsubmit=async e=>{e.preventDefault();const em=$('em').value.trim();$('lb').disabled=true;$('lm').textContent='보내는 중…';
+    const {error}=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname}});
+    $('lb').disabled=false;$('lm').textContent=error?'보내지 못했어요: '+error.message:`${em} 으로 로그인 링크를 보냈어요. 메일함(스팸함도)을 확인해 주세요.`}}
+async function onUser(user){
+  authUI(user);
+  if(!user){uid=null;ready=true;status('이 브라우저에만 저장됨 · 로그인하면 계정에 저장돼요');return}
+  if(uid===user.id)return; uid=user.id; status('불러오는 중…');
+  try{const {data,error}=await sb.from('maps').select('data').eq('user_id',uid).maybeSingle();if(error)throw error;ready=true;
+    if(data&&data.data){S=clean(data.data);local();render();status('저장됨')}
+    else if(Object.keys(S.regions).length){status('저장 중…');flush()}
+    else status('저장됨')}
+  catch(e){status('불러오기 실패 · 새로고침해 주세요')}}
+if(sb){sb.auth.onAuthStateChange((ev,session)=>{setTimeout(()=>onUser(session?session.user:null),0)})}else authUI(null);
+}).catch(()=>{document.getElementById('save').textContent='지도를 불러오지 못했어요. 새로고침해 주세요'});
+</script>
+</body>
+</html>
